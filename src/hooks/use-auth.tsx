@@ -18,12 +18,33 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth(firebaseApp);
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setIsLoading(false);
-    });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    let unsubscribe: () => void;
+
+    const initializeAuth = async () => {
+      if (firebaseApp) {
+        try {
+          const auth = getAuth(firebaseApp);
+          unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            setIsLoading(false);
+          });
+        } catch (error) {
+          console.error("Firebase Auth Error:", error);
+          setIsLoading(false);
+        }
+      } else {
+        console.warn("Firebase app not initialized.");
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe(); // Cleanup subscription on unmount
+      }
+    };
   }, []);
 
   return (
@@ -36,3 +57,4 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
 export const useAuth = (): AuthContextType => {
   return useContext(AuthContext);
 };
+

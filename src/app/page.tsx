@@ -1,21 +1,16 @@
 'use client';
 
-import Link from "next/link";
-import { useAuth } from "@/hooks/use-auth";
+import Link from 'next/link';
 
 export default function Home() {
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900">
-            LetterLink App
-          </h1>
+          <h1 className="text-3xl font-extrabold text-gray-900">LetterLink App</h1>
           <p className="mt-2 text-center text-sm text-gray-600">
-            LetterLink connects people who want to share their stories with
-            volunteers who want to listen and reply with empathy and support.
+            LetterLink connects people who want to share their stories with volunteers who want to
+            listen and reply with empathy and support.
           </p>
         </div>
 
@@ -34,23 +29,15 @@ export default function Home() {
             Track Your Letter
           </Link>
 
-          {user ? (
-            <Link
-              href="/manager"
-              className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Manager Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/manager/login"
-              className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Manager Login
-            </Link>
-          )}
-          <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Replier Login</button>
-
+          <Link
+            href="/manager/login"
+            className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Manager Login
+          </Link>
+          <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Replier Login
+          </button>
         </div>
       </div>
     </div>

@@ -75,12 +75,31 @@ export default function ManagerDashboard() {
     }
   };
 
+  // Bypass authentication for test mode
+  const enterTestMode = () => {
+    router.push('/manager');
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   if (!user) {
-    return <div>Please login as manager</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-secondary">
+        <Card className="w-full max-w-md p-4">
+          <CardHeader>
+            <CardTitle>Manager Access</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div>Please login as a manager to view this page.</div>
+            <Button onClick={enterTestMode} className="mb-4">
+              Enter Test Mode
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

@@ -75,11 +75,6 @@ export default function ManagerDashboard() {
     }
   };
 
-  // Bypass authentication for test mode
-  const enterTestMode = () => {
-    router.push('/manager');
-  };
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -93,9 +88,6 @@ export default function ManagerDashboard() {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div>Please login as a manager to view this page.</div>
-            <Button onClick={enterTestMode} className="mb-4">
-              Enter Test Mode
-            </Button>
           </CardContent>
         </Card>
       </div>

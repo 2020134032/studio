@@ -28,10 +28,6 @@ export default function ReplierLogin() {
     }
   };
 
-  const enterTestMode = () => {
-    router.push('/replier');
-  };
-
   return (
     <div className="flex justify-center items-center min-h-screen bg-secondary">
       <Card className="w-full max-w-md p-4">
@@ -64,9 +60,6 @@ export default function ReplierLogin() {
             <Button type="submit">Login</Button>
             {error && <p className="text-red-500 mt-2">{error}</p>}
           </form>
-          <Button onClick={enterTestMode} className="mt-4">
-            Enter Test Mode
-          </Button>
         </CardContent>
       </Card>
     </div>

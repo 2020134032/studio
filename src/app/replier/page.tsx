@@ -20,12 +20,6 @@ export default function ReplierDashboard() {
     }
   };
 
-  // Bypass authentication for test mode
-  const enterTestMode = () => {
-    router.push('/replier');
-  };
-
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -39,9 +33,6 @@ export default function ReplierDashboard() {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div>Please login as a replier to view this page.</div>
-            <Button onClick={enterTestMode} className="mb-4">
-              Enter Test Mode
-            </Button>
           </CardContent>
         </Card>
       </div>

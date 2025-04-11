@@ -3,45 +3,35 @@
 import {useState, useRef, useEffect} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
-import {Textarea} from '@/components/ui/textarea';
+import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
-import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {useToast} from '@/hooks/use-toast';
+import {getFirestore, collection, addDoc} from 'firebase/firestore';
+import {firebaseApp} from '@/lib/firebase';
+import {useAuth} from '@/hooks/use-auth';
+import {useRouter} from 'next/navigation';
 
 export default function SubmitLetter() {
-  const [letterText, setLetterText] = useState('');
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
-
+  const [returnAddress, setReturnAddress] = useState('');
   const {toast} = useToast();
+  const {user} = useAuth();
+  const router = useRouter();
+  const [letterId, setLetterId] = useState('');
 
   useEffect(() => {
-    const getCameraPermission = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
-        setHasCameraPermission(true);
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this app.',
-        });
-      }
+    // Generate a unique letter ID when the component mounts
+    const generateLetterId = () => {
+      const timestamp = Date.now().toString(36);
+      const randomId = Math.random().toString(36).substring(2, 7);
+      setLetterId(`${timestamp}-${randomId}`);
     };
 
-    getCameraPermission();
-  }, [toast]);
-
+    generateLetterId();
+  }, []);
 
   useEffect(() => {
     const getMediaRecorder = async () => {
@@ -55,20 +45,7 @@ export default function SubmitLetter() {
         setAudioURL(url);
       };
 
-      recorder.onstop = async () => {
-        if (audioURL) {
-          // Fetch sends a GET request.
-          const response = await fetch(audioURL);
-          const blob = await response.blob();
-
-          const formData = new FormData();
-          formData.append('audio', blob, 'recording.wav');
-
-          // TODO: Send formData to transcription service and set the returned text in letterText state
-          // const transcription = await transcribeAudio(formData);
-          // setLetterText(transcription);
-          setLetterText('Transcribed text from audio.');
-        }
+      recorder.onstop = () => {
       };
     };
 
@@ -84,7 +61,7 @@ export default function SubmitLetter() {
         mediaRecorder.stop();
       }
     };
-  }, [recording, mediaRecorder, audioURL]);
+  }, [recording, mediaRecorder]);
 
   const toggleRecording = () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -95,9 +72,63 @@ export default function SubmitLetter() {
     }
   };
 
-  const handleSubmit = () => {
-    // Placeholder for submitting the letter
-    console.log('Letter submitted:', letterText);
+  const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Required',
+        description: 'Please log in to submit a letter.',
+      });
+      return;
+    }
+
+    if (!audioURL) {
+      toast({
+        variant: 'destructive',
+        title: 'Recording Required',
+        description: 'Please record a letter before submitting.',
+      });
+      return;
+    }
+
+    if (!returnAddress) {
+      toast({
+        variant: 'destructive',
+        title: 'Return Address Required',
+        description: 'Please provide a return address.',
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(audioURL);
+      const blob = await response.blob();
+
+      const db = getFirestore(firebaseApp);
+      const lettersCollection = collection(db, 'letters');
+
+      await addDoc(lettersCollection, {
+        senderId: user.uid,
+        audioUrl: audioURL, // Save the audio URL
+        returnAddress: returnAddress, // Save the return address
+        letterId: letterId,
+        status: 'received',
+        createdAt: new Date(),
+      });
+
+      toast({
+        title: 'Letter Submitted',
+        description: 'Your letter has been submitted successfully.',
+      });
+
+      router.push('/'); // Redirect to home page after submission
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: error.message,
+      });
+    }
   };
 
   return (
@@ -105,31 +136,27 @@ export default function SubmitLetter() {
       <Card className="w-full max-w-md p-4">
         <CardHeader>
           <CardTitle>Submit a Letter</CardTitle>
-          <CardDescription>Share your thoughts and feelings.</CardDescription>
+          <CardDescription>Share your story through audio.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="letter-text">Your Letter</Label>
-            <Textarea
-              id="letter-text"
-              placeholder="Write your letter here"
-              value={letterText}
-              onChange={(e) => setLetterText(e.target.value)}
+            <Label htmlFor="letter-id">Letter ID</Label>
+            <Input
+              id="letter-id"
+              placeholder="Unique Letter ID"
+              value={letterId}
+              readOnly // Make it read-only to display the generated ID
             />
           </div>
-
-          <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
-
-          { !(hasCameraPermission) && (
-              <Alert variant="destructive">
-                <AlertTitle>Camera Access Required</AlertTitle>
-                <AlertDescription>
-                  Please allow camera access to use this feature.
-                </AlertDescription>
-              </Alert>
-          )
-          }
-
+          <div className="grid gap-2">
+            <Label htmlFor="return-address">Return Address</Label>
+            <Input
+              id="return-address"
+              placeholder="Your Return Address"
+              value={returnAddress}
+              onChange={(e) => setReturnAddress(e.target.value)}
+            />
+          </div>
 
           <Button type="button" onClick={toggleRecording}>
             {recording ? 'Stop Recording' : 'Start Recording'}

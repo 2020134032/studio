@@ -61,6 +61,28 @@ Can view all letters, statuses, repliers, and submitted feedback.
 
 Basic dashboard or table view.
 
+## Data Storage in Firebase
+
+The application will use Firebase services for data storage and management.
+
+### Firestore
+
+Firestore will serve as the primary database. The data will be structured into two main collections:
+
+- **Letters Collection:**
+  - Each document represents a letter.
+  - Fields: `content`, `uniqueId`, `returnAddress` (securely stored), `status`, `reply`, `feedback`, `replierId`, `topics` (AI), `emotions` (AI), `suggestedResponses` (AI).
+- **Users Collection:**
+  - Documents for Repliers and Managers.
+  - Fields: `userId`, `role` (`replier` or `manager`), `contactInformation`, (optionally) assigned `letterIds`.
+
+### Cloud Storage
+
+Audio files for letter submissions will be stored in Firebase Cloud Storage.
+
+- Each audio file will be stored with a unique identifier, potentially linked to the letter's `uniqueId`.
+- The corresponding letter document in Firestore will store a reference (URL or path) to the audio file in Cloud Storage.
+
 🔸 Firestore Database Requirements:
 
 Collection: letters

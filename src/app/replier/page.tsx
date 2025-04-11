@@ -5,10 +5,35 @@ import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import {getAuth, signOut} from 'firebase/auth';
 import {useRouter} from 'next/navigation';
+import {useEffect, useState} from 'react';
+import {doc, getDoc, getFirestore} from 'firebase/firestore';
+import {firebaseApp} from '@/lib/firebase';
 
 export default function ReplierDashboard() {
   const {user, isLoading} = useAuth();
   const router = useRouter();
+  const [isReplier, setIsReplier] = useState(false); // New state to check if user is a replier
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (user) {
+        const db = getFirestore(firebaseApp);
+        const userRef = doc(db, 'users', user.uid); // Assuming you have a 'users' collection
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setIsReplier(userData.role === 'replier'); // Check if the user has the 'replier' role
+        } else {
+          setIsReplier(false); // If user data doesn't exist, default to not being a replier
+        }
+      }
+    };
+
+    if (user) {
+      checkUserRole(); // Call checkUserRole when user state is available
+    }
+  }, [user, router]);
 
   const handleLogout = async () => {
     const auth = getAuth(firebaseApp);
@@ -22,6 +47,22 @@ export default function ReplierDashboard() {
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  // If the user is not a replier, redirect or show an error
+  if (!isReplier) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-secondary">
+        <Card className="w-full max-w-md p-4">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div>You do not have permission to view this page.</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!user) {

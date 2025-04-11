@@ -10,6 +10,8 @@ import {
   orderBy,
   query,
   limit,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import {firebaseApp} from '@/lib/firebase';
 import {Button} from '@/components/ui/button';
@@ -42,6 +44,7 @@ export default function ManagerDashboard() {
   const {user, isLoading} = useAuth();
   const [letters, setLetters] = useState<Letter[]>([]);
   const router = useRouter();
+  const [isManager, setIsManager] = useState(false); // New state to check if user is a manager
 
   useEffect(() => {
     const fetchLetters = async () => {
@@ -60,10 +63,27 @@ export default function ManagerDashboard() {
       setLetters(lettersData);
     };
 
+    const checkUserRole = async () => {
+      if (user) {
+        const db = getFirestore(firebaseApp);
+        const userRef = doc(db, 'users', user.uid); // Assuming you have a 'users' collection
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setIsManager(userData.role === 'manager'); // Check if the user has the 'manager' role
+        } else {
+          setIsManager(false); // If user data doesn't exist, default to not being a manager
+        }
+      }
+    };
+
+
     if (user) {
       fetchLetters();
+      checkUserRole(); // Call checkUserRole when user state is available
     }
-  }, [user]);
+  }, [user, router]);
 
   const handleLogout = async () => {
     const auth = getAuth(firebaseApp);
@@ -77,6 +97,22 @@ export default function ManagerDashboard() {
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  // If the user is not a manager, redirect or show an error
+  if (!isManager) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-secondary">
+        <Card className="w-full max-w-md p-4">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div>You do not have permission to view this page.</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!user) {
